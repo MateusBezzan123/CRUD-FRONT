@@ -2,6 +2,19 @@
 
 import { useState } from 'react';
 
+// Função para buscar o endereço baseado no CEP
+const fetchCep = async (cep: string) => {
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await response.json();
+    if (data.erro) return null;
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error);
+    return null;
+  }
+};
+
 export default function Cadastro() {
   const [formData, setFormData] = useState({
     nome: '',
@@ -16,6 +29,9 @@ export default function Cadastro() {
     estado: '',
   });
 
+  const [cepError, setCepError] = useState('');
+  const [formError, setFormError] = useState('');
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -23,9 +39,49 @@ export default function Cadastro() {
     });
   };
 
+  // Função para buscar o endereço baseado no CEP digitado
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cep = e.target.value;
+    setFormData({ ...formData, cep });
+
+    if (cep.length === 8) {
+      const cepData = await fetchCep(cep);
+      if (cepData) {
+        setFormData({
+          ...formData,
+          rua: cepData.logradouro,
+          bairro: cepData.bairro,
+          cidade: cepData.localidade,
+          estado: cepData.uf,
+        });
+        setCepError('');
+      } else {
+        setCepError('CEP inválido. Tente novamente.');
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validações simples
+    if (formData.senha !== formData.confirmarSenha) {
+      setFormError('As senhas não coincidem.');
+      return;
+    }
+
+    if (!formData.nome || !formData.email || !formData.senha || !formData.cep) {
+      setFormError('Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    // Se passou nas validações
+    setFormError('');
     console.log('Dados do usuário:', formData);
+
+    // Armazenar o usuário no localStorage
+    localStorage.setItem('user', JSON.stringify(formData));
+    alert('Cadastro realizado com sucesso!');
   };
 
   return (
@@ -65,7 +121,63 @@ export default function Cadastro() {
             placeholder="Confirmar Senha"
             className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          {/* More inputs for address */}
+
+          {/* Campo de CEP */}
+          <input
+            type="text"
+            name="cep"
+            value={formData.cep}
+            onChange={handleCepChange}
+            placeholder="CEP"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          {cepError && <p className="text-red-500 text-sm">{cepError}</p>}
+
+          {/* Campos de endereço preenchidos automaticamente */}
+          <input
+            type="text"
+            name="rua"
+            value={formData.rua}
+            onChange={handleChange}
+            placeholder="Rua"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            name="numero"
+            value={formData.numero}
+            onChange={handleChange}
+            placeholder="Número"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            name="bairro"
+            value={formData.bairro}
+            onChange={handleChange}
+            placeholder="Bairro"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            name="cidade"
+            value={formData.cidade}
+            onChange={handleChange}
+            placeholder="Cidade"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            name="estado"
+            value={formData.estado}
+            onChange={handleChange}
+            placeholder="Estado"
+            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+
+          {/* Exibe erros de formulário */}
+          {formError && <p className="text-red-500 text-sm text-center">{formError}</p>}
+
           <button
             type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"

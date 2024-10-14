@@ -9,6 +9,7 @@ export default function Recuperacao() {
     e.preventDefault();
     console.log('Email de recuperação:', email);
     // Lógica para envio de recuperação de senha
+    alert('Um link de recuperação foi enviado para seu email.');
   };
 
   return (
