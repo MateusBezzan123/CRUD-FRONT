@@ -1,0 +1,11 @@
+/* src/app/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Appearance none to all inputs */
+input {
+  @apply appearance-none;
+  box-sizing: border-box; /* Ensure inputs respect padding and border size */
+}
