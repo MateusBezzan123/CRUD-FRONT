@@ -1,10 +1,30 @@
 "use client";
 
+import { useState, useEffect } from 'react';
+
+interface User {
+  nome: string;
+  email: string;
+  rua: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+}
+
 export default function Home() {
-  const users = [
-    { nome: "João", email: "joao@example.com", endereco: "Rua 1, 123, Bairro A" },
-    { nome: "Maria", email: "maria@example.com", endereco: "Rua 2, 456, Bairro B" },
-  ];
+  const [users, setUsers] = useState<any[]>([]);
+
+  
+  useEffect(() => {
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+      const users = JSON.parse(storedUsers);
+      setUsers(users); 
+    } else {
+      console.error('Nenhum usuário encontrado no localStorage.');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -19,16 +39,27 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className="border-t">
-                <td className="px-4 py-2">{user.nome}</td>
-                <td className="px-4 py-2">{user.email}</td>
-                <td className="px-4 py-2">{user.endereco}</td>
+            {users.length > 0 ? (
+              users.map((user, index) => (
+                <tr key={index} className="border-t">
+                  <td className="px-4 py-2">{user.nome}</td>
+                  <td className="px-4 py-2">{user.email}</td>
+                  <td className="px-4 py-2">
+                    {`${user.rua}, ${user.numero}, ${user.bairro}, ${user.cidade}, ${user.estado}`}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td className="px-4 py-2" colSpan={3}>
+                  Nenhum usuário cadastrado.
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+

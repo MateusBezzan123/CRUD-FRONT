@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-// Função para buscar o endereço baseado no CEP
 const fetchCep = async (cep: string) => {
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
@@ -39,7 +38,6 @@ export default function Cadastro() {
     });
   };
 
-  // Função para buscar o endereço baseado no CEP digitado
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const cep = e.target.value;
     setFormData({ ...formData, cep });
@@ -64,7 +62,6 @@ export default function Cadastro() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validações simples
     if (formData.senha !== formData.confirmarSenha) {
       setFormError('As senhas não coincidem.');
       return;
@@ -75,11 +72,9 @@ export default function Cadastro() {
       return;
     }
 
-    // Se passou nas validações
     setFormError('');
     console.log('Dados do usuário:', formData);
 
-    // Armazenar o usuário no localStorage
     localStorage.setItem('user', JSON.stringify(formData));
     alert('Cadastro realizado com sucesso!');
   };
@@ -121,8 +116,6 @@ export default function Cadastro() {
             placeholder="Confirmar Senha"
             className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-
-          {/* Campo de CEP */}
           <input
             type="text"
             name="cep"
@@ -132,8 +125,6 @@ export default function Cadastro() {
             className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           {cepError && <p className="text-red-500 text-sm">{cepError}</p>}
-
-          {/* Campos de endereço preenchidos automaticamente */}
           <input
             type="text"
             name="rua"
@@ -174,10 +165,7 @@ export default function Cadastro() {
             placeholder="Estado"
             className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-
-          {/* Exibe erros de formulário */}
           {formError && <p className="text-red-500 text-sm text-center">{formError}</p>}
-
           <button
             type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"

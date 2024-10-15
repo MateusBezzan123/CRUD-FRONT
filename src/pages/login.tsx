@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Função para buscar o endereço baseado no CEP
 const fetchCep = async (cep: string) => {
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
@@ -21,6 +20,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
     nome: '',
+    email: '',
     cep: '',
     rua: '',
     numero: '',
@@ -29,6 +29,7 @@ export default function Login() {
     estado: '',
   });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false); // Estado para recuperação de senha
   const [message, setMessage] = useState('');
   const router = useRouter();
 
@@ -41,49 +42,35 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const storedUser = localStorage.getItem('user');
-
+    const storedUsers = localStorage.getItem('users');
+    const users = storedUsers ? JSON.parse(storedUsers) : [];
+  
     if (isRegistering) {
-      // Lógica de cadastro
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        if (user.email === email) {
-          setMessage('Erro: Email já cadastrado.');
-        } else {
-          localStorage.setItem(
-            'user',
-            JSON.stringify({ email, senha: password, ...formData })
-          );
-          setMessage('Cadastro realizado com sucesso!');
-        }
+      const userExists = users.some((user: any) => user.email === email);
+  
+      if (userExists) {
+        setMessage('Erro: Email já cadastrado.');
       } else {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ email, senha: password, ...formData })
-        );
+        const { email: _email, ...restFormData } = formData; 
+        const newUser = { email, senha: password, ...restFormData }; 
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
         setMessage('Cadastro realizado com sucesso!');
       }
     } else {
-      // Lógica de login
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-
-        if (user.email === email && user.senha === password) {
-          setMessage('Login realizado com sucesso!');
-          setTimeout(() => {
-            router.push('/home');
-          }, 1000);
-        } else {
-          setMessage('Erro: Email ou senha incorretos.');
-        }
+      const user = users.find((user: any) => user.email === email && user.senha === password);
+  
+      if (user) {
+        setMessage('Login realizado com sucesso!');
+        setTimeout(() => {
+          router.push('/home');
+        }, 0);
       } else {
-        setMessage('Erro: Nenhum usuário registrado encontrado.');
+        setMessage('Erro: Email ou senha incorretos.');
       }
     }
   };
-
-  // Função para buscar o endereço baseado no CEP digitado
+  
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const cep = e.target.value;
     setFormData({ ...formData, cep });
@@ -110,14 +97,23 @@ export default function Login() {
     setMessage('');
   };
 
+  const toggleRecoverPassword = () => {
+    setIsRecoveringPassword(!isRecoveringPassword);
+    setMessage('');
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          {isRegistering ? 'Cadastrar-se' : 'Entrar'}
+          {isRecoveringPassword
+            ? 'Recuperar Senha'
+            : isRegistering
+            ? 'Cadastrar-se'
+            : 'Entrar'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {isRegistering && (
+          {isRegistering && !isRecoveringPassword && (
             <>
               <input
                 type="text"
@@ -125,6 +121,14 @@ export default function Login() {
                 value={formData.nome}
                 onChange={handleChange}
                 placeholder="Nome Completo"
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email"
                 className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <input
@@ -178,25 +182,49 @@ export default function Login() {
             </>
           )}
 
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Senha"
-            className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
+          {!isRegistering && !isRecoveringPassword && (
+            <>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Senha"
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </>
+          )}
+
+          {isRecoveringPassword && (
+            <>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Digite seu email para recuperação"
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <p className="text-sm text-gray-500">
+                Você receberá um link de recuperação se o email estiver correto.
+              </p>
+            </>
+          )}
 
           {message && (
-            <p className={`text-sm text-center ${message.includes('sucesso') ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm text-center ${
+                message.includes('sucesso') ? 'text-green-500' : 'text-red-500'
+              }`}
+            >
               {message}
             </p>
           )}
@@ -205,12 +233,26 @@ export default function Login() {
             type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            {isRegistering ? 'Cadastrar' : 'Entrar'}
+            {isRecoveringPassword
+              ? 'Recuperar Senha'
+              : isRegistering
+              ? 'Cadastrar'
+              : 'Entrar'}
           </button>
         </form>
 
         <div className="text-center mt-4">
-          {isRegistering ? (
+          {isRecoveringPassword ? (
+            <p className="text-sm">
+              Lembrou da senha?{' '}
+              <button
+                onClick={toggleRecoverPassword}
+                className="text-purple-500 hover:text-purple-700 font-semibold"
+              >
+                Faça login aqui
+              </button>
+            </p>
+          ) : isRegistering ? (
             <p className="text-sm">
               Já tem uma conta?{' '}
               <button
@@ -221,15 +263,26 @@ export default function Login() {
               </button>
             </p>
           ) : (
-            <p className="text-sm">
-              Não tem uma conta?{' '}
-              <button
-                onClick={toggleForm}
-                className="text-purple-500 hover:text-purple-700 font-semibold"
-              >
-                Cadastre-se aqui
-              </button>
-            </p>
+            <>
+              <p className="text-sm">
+                Não tem uma conta?{' '}
+                <button
+                  onClick={toggleForm}
+                  className="text-purple-500 hover:text-purple-700 font-semibold"
+                >
+                  Cadastre-se aqui
+                </button>
+              </p>
+              <p className="text-sm mt-2">
+                Esqueceu sua senha?{' '}
+                <button
+                  onClick={toggleRecoverPassword}
+                  className="text-purple-500 hover:text-purple-700 font-semibold"
+                >
+                  Recuperar senha
+                </button>
+              </p>
+            </>
           )}
         </div>
       </div>
